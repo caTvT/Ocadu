@@ -1,0 +1,97 @@
+#include "Arduino_LED_Matrix.h" 
+// Creating LED Matrix Objects
+ArduinoLEDMatrix matrix;
+
+// Define animation frame data
+const uint32_t animation1[][3] = {
+    { 0x30c69, 0x6c930000, 0x90060 },
+    { 0x30, 0xc696c930, 0x90060 }
+};
+
+const uint32_t animation2[][3] = {
+    { 0xf9f39, 0xc39c0000, 0x60000 },
+    { 0xf9, 0xf39c39c0, 0x60000 }
+};
+
+const uint32_t animation3[][3] = {
+    { 0x10829, 0x42942941, 0x8060000 },
+    { 0x30c49, 0x24924923, 0xc060000 }
+};
+
+const uint32_t animation4[][3] = {
+    { 0x20430, 0xc1986060, 0x60090 },
+    { 0x20, 0x430c1986, 0x6060090 }
+};
+
+// Defining Ultrasonic Sensor Pins
+const int trigPin = 9;  
+const int echoPin = 10; 
+
+
+// Functions for calculating distances
+float getDistance() {
+    // Sending ultrasonic pulses
+    digitalWrite(trigPin, LOW);
+    delayMicroseconds(2);
+    digitalWrite(trigPin, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(trigPin, LOW);
+
+    // Read echo time
+    long duration = pulseIn(echoPin, HIGH);
+
+    // Calculation of distance (in centimeters)
+    float distance = duration * 0.034 / 2;
+    return distance;
+}
+
+// Functions to play animations
+void playAnimation(const uint32_t animation[][3], int frameCount, int delayTime) {
+    for (int i = 0; i < frameCount; i++) {
+        matrix.loadFrame(animation[i]); 
+        delay(delayTime); // play Speed
+    }
+}
+
+void setup() {
+    // Initializing the LED Matrix
+    matrix.begin();
+
+    // Initialize Ultrasonic Sensor Pins
+    pinMode(trigPin, OUTPUT);
+    pinMode(echoPin, INPUT);
+
+    // Initialize press sensor pins
+    pinMode(buttonPin, INPUT_PULLUP);
+
+    // nitialize serial communications (for debugging)
+    Serial.begin(9600);
+    Serial.println("Initialized: LED Matrix and Sensors");
+}
+
+void loop() {
+    
+
+    // Get current distance
+    float distance = getDistance();
+    Serial.print("Distance: ");
+    Serial.println(distance);
+
+    // Play different animations according to the distance
+    if (distance < 5) {
+        Serial.println("Displaying Animation 4 (Distance < 5cm)");
+        playAnimation(animation4, sizeof(animation4) / sizeof(animation4[0]), 500);
+    } else if (distance < 10) {
+        Serial.println("Displaying Animation 3 (Distance 5-10cm)");
+        playAnimation(animation3, sizeof(animation3) / sizeof(animation3[0]), 500);
+    } else if (distance < 30) {
+        Serial.println("Displaying Animation 2 (Distance 10-20cm)");
+        playAnimation(animation2, sizeof(animation2) / sizeof(animation2[0]), 500);
+    } else {
+        Serial.println("Displaying Animation 1 (Distance > 20cm)");
+        playAnimation(animation1, sizeof(animation1) / sizeof(animation1[0]), 500);
+    }
+
+    // A slight delay to avoid frequent updates
+    delay(30);
+}
